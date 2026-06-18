@@ -371,8 +371,14 @@ static void render_convert_texture(struct obs_core_video_mix *video, gs_texture_
 		gs_effect_set_vec4(color_vec0, &vec0);
 		gs_effect_set_float(sdr_white_nits_over_maximum, multiplier);
 		gs_effect_set_float(hdr_lw, hdr_nominal_peak_level);
-		render_convert_plane(effect, convert_textures[0], video->conversion_techs[0]);
 
+		// Needed for v210 conversion
+		if (!convert_textures[1]) {
+			gs_effect_set_vec4(color_vec1, &vec1);
+			gs_effect_set_vec4(color_vec2, &vec2);
+		}
+
+		render_convert_plane(effect, convert_textures[0], video->conversion_techs[0]);
 		if (convert_textures[1]) {
 			gs_effect_set_texture(image, texture);
 			gs_effect_set_vec4(color_vec1, &vec1);
@@ -707,6 +713,15 @@ static void set_gpu_converted_data(struct video_frame *output, const struct vide
 
 		break;
 	}
+	case VIDEO_FORMAT_V210: {
+		const uint32_t width_aligned = (info->width + 47) & -48;
+		const uint32_t width = ((width_aligned + 5) / 6) * 16;
+		const uint32_t height = info->height;
+
+		set_gpu_converted_plane(width, height, input->linesize[0], output->linesize[0], input->data[0], output->data[0]);
+
+		break;
+	}
 	case VIDEO_FORMAT_P216: {
 		const uint32_t width_x2 = info->width * 2;
 		const uint32_t height = info->height;
@@ -748,7 +763,6 @@ static void set_gpu_converted_data(struct video_frame *output, const struct vide
 	case VIDEO_FORMAT_YUVA:
 	case VIDEO_FORMAT_YA2L:
 	case VIDEO_FORMAT_AYUV:
-	case VIDEO_FORMAT_V210:
 	case VIDEO_FORMAT_R10L:
 		/* unimplemented */
 		;

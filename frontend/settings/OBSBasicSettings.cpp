@@ -1047,6 +1047,7 @@ void OBSBasicSettings::LoadColorSpaces()
 #define CF_I444_STR QTStr("Basic.Settings.Advanced.Video.ColorFormat.I444")
 #define CF_P010_STR QTStr("Basic.Settings.Advanced.Video.ColorFormat.P010")
 #define CF_I010_STR QTStr("Basic.Settings.Advanced.Video.ColorFormat.I010")
+#define CF_V210_STR QTStr("Basic.Settings.Advanced.Video.ColorFormat.V210")
 #define CF_P216_STR QTStr("Basic.Settings.Advanced.Video.ColorFormat.P216")
 #define CF_P416_STR QTStr("Basic.Settings.Advanced.Video.ColorFormat.P416")
 #define CF_BGRA_STR QTStr("Basic.Settings.Advanced.Video.ColorFormat.BGRA")
@@ -1057,6 +1058,7 @@ void OBSBasicSettings::LoadColorFormats()
 	ui->colorFormat->addItem(CF_I420_STR, "I420");
 	ui->colorFormat->addItem(CF_I444_STR, "I444");
 	ui->colorFormat->addItem(CF_P010_STR, "P010");
+	ui->colorFormat->addItem(CF_V210_STR, "V210");
 	ui->colorFormat->addItem(CF_I010_STR, "I010");
 	ui->colorFormat->addItem(CF_P216_STR, "P216");
 	ui->colorFormat->addItem(CF_P416_STR, "P416");
@@ -2562,7 +2564,7 @@ void OBSBasicSettings::UpdateColorFormatSpaceWarning()
 	switch (ui->colorSpace->currentIndex()) {
 	case 3: /* Rec.2100 (PQ) */
 	case 4: /* Rec.2100 (HLG) */
-		if ((format == "P010") || (format == "P216") || (format == "P416")) {
+		if ((format == "P010") || (format == "P216") || (format == "V210") || (format == "P416")) {
 			ui->advancedMsg2->clear();
 			ui->advancedMsg2->setVisible(false);
 		} else if (format == "I010") {
@@ -2577,7 +2579,7 @@ void OBSBasicSettings::UpdateColorFormatSpaceWarning()
 		if (format == "NV12") {
 			ui->advancedMsg2->clear();
 			ui->advancedMsg2->setVisible(false);
-		} else if ((format == "I010") || (format == "P010") || (format == "P216") || (format == "P416")) {
+		} else if ((format == "I010") || (format == "P010") || (format == "V210") || (format == "P216") || (format == "P416")) {
 			ui->advancedMsg2->setText(QTStr("Basic.Settings.Advanced.FormatWarningPreciseSdr"));
 			ui->advancedMsg2->setVisible(true);
 		} else {

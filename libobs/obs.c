@@ -107,6 +107,18 @@ static inline void calc_gpu_conversion_sizes(struct obs_core_video_mix *video)
 			video->conversion_techs[1] = "P010_SRGB_UV";
 		}
 		break;
+	case VIDEO_FORMAT_V210:
+		video->conversion_needed = true;
+		video->conversion_width_i = 1.f / (float)info->width;
+		video->conversion_height_i = 1.f / (float)info->height;
+		if (info->colorspace == VIDEO_CS_2100_PQ) {
+			video->conversion_techs[0] = "V210_PQ_YUV";
+		} else if (info->colorspace == VIDEO_CS_2100_HLG) {
+			video->conversion_techs[0] = "V210_HLG_YUV";
+		} else {
+			video->conversion_techs[0] = "V210_SRGB_YUV";
+		}
+		break;
 	case VIDEO_FORMAT_P216:
 		video->conversion_needed = true;
 		video->conversion_width_i = 1.f / (float)info->width;
@@ -237,6 +249,9 @@ static bool obs_init_gpu_conversion(struct obs_core_video_mix *video)
 		if (!video->convert_textures[0] || !video->convert_textures[1])
 			success = false;
 		break;
+	case VIDEO_FORMAT_V210:
+		video->convert_textures[0] = gs_texture_create(((info->width + 5) / 6) * 4, info->height, GS_R10G10B10A2, 1, NULL, GS_RENDER_TARGET);
+		break;
 	case VIDEO_FORMAT_P216:
 		video->convert_textures[0] =
 			gs_texture_create(info->width, info->height, GS_R16, 1, NULL, GS_RENDER_TARGET);
@@ -326,6 +341,11 @@ static bool obs_init_gpu_copy_surfaces(struct obs_core_video_mix *video, size_t 
 		if (!video->copy_surfaces[i][1])
 			return false;
 		break;
+	case VIDEO_FORMAT_V210:
+		video->copy_surfaces[i][0] = gs_stagesurface_create(((info->width + 5) / 6) * 4, info->height, GS_R10G10B10A2);
+		if (!video->copy_surfaces[i][0])
+			return false;
+		break;
 	case VIDEO_FORMAT_P216:
 		video->copy_surfaces[i][0] = gs_stagesurface_create(info->width, info->height, GS_R16);
 		if (!video->copy_surfaces[i][0])
@@ -359,6 +379,7 @@ static bool obs_init_textures(struct obs_core_video_mix *video)
 	switch (info->format) {
 	case VIDEO_FORMAT_I010:
 	case VIDEO_FORMAT_P010:
+	case VIDEO_FORMAT_V210:
 	case VIDEO_FORMAT_I210:
 	case VIDEO_FORMAT_I412:
 	case VIDEO_FORMAT_YA2L:
@@ -411,6 +432,7 @@ static bool obs_init_textures(struct obs_core_video_mix *video)
 		switch (info->format) {
 		case VIDEO_FORMAT_I010:
 		case VIDEO_FORMAT_P010:
+		case VIDEO_FORMAT_V210:
 		case VIDEO_FORMAT_P216:
 		case VIDEO_FORMAT_P416:
 			space = GS_CS_SRGB_16F;

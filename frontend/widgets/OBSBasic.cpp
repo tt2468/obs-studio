@@ -1548,6 +1548,8 @@ static inline enum video_format GetVideoFormatFromName(const char *name)
 		return VIDEO_FORMAT_I010;
 	} else if (astrcmpi(name, "P010") == 0) {
 		return VIDEO_FORMAT_P010;
+	} else if (astrcmpi(name, "V210") == 0) {
+		return VIDEO_FORMAT_V210;
 	} else if (astrcmpi(name, "P216") == 0) {
 		return VIDEO_FORMAT_P216;
 	} else if (astrcmpi(name, "P416") == 0) {
