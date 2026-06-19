@@ -14,9 +14,12 @@ MODULE_EXPORT const char *obs_module_description(void)
 
 extern struct obs_output_info rtmp_output_info;
 extern struct obs_output_info null_output_info;
+extern struct obs_output_info null_output_info_raw;
 extern struct obs_output_info flv_output_info;
 extern struct obs_output_info mp4_output_info;
 extern struct obs_output_info mov_output_info;
+
+static obs_output_t *test = NULL;
 
 #if defined(_WIN32) && defined(MBEDTLS_THREADING_ALT)
 void mbed_mutex_init(mbedtls_threading_mutex_t *m)
@@ -62,14 +65,21 @@ bool obs_module_load(void)
 
 	obs_register_output(&rtmp_output_info);
 	obs_register_output(&null_output_info);
+	obs_register_output(&null_output_info_raw);
 	obs_register_output(&flv_output_info);
 	obs_register_output(&mp4_output_info);
 	obs_register_output(&mov_output_info);
+
+	test = obs_output_create("null_output_raw", "test raw", NULL, NULL);
+
 	return true;
 }
 
 void obs_module_unload(void)
 {
+	if (test)
+		obs_output_release(test);
+
 #ifdef _WIN32
 #ifdef MBEDTLS_THREADING_ALT
 	mbedtls_threading_free_alt();
