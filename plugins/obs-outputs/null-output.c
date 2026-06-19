@@ -15,6 +15,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
+#include <util/platform.h>
 #include <util/threading.h>
 #include <obs-module.h>
 
@@ -23,6 +24,8 @@ struct null_output {
 
 	pthread_t stop_thread;
 	bool stop_thread_active;
+
+	FILE *f;
 };
 
 static const char *null_output_getname(void *unused)
@@ -63,10 +66,37 @@ static bool null_output_start(void *data)
 	return true;
 }
 
+static bool null_output_start_raw(void *data)
+{
+	struct null_output *context = data;
+
+	if (!obs_output_can_begin_data_capture(context->output, 0))
+		return false;
+
+	if (context->stop_thread_active)
+		pthread_join(context->stop_thread, NULL);
+
+	context->f = os_fopen("test.v210", "wb");
+	if (!context->f)
+		return false;
+
+	blog(LOG_INFO, "Opened v210 file");
+
+	obs_output_begin_data_capture(context->output, 0);
+
+	return true;
+}
+
 static void *stop_thread(void *data)
 {
 	struct null_output *context = data;
 	obs_output_end_data_capture(context->output);
+
+	if (context->f) {
+		fclose(context->f);
+		context->f = NULL;
+	}
+
 	context->stop_thread_active = false;
 	return NULL;
 }
@@ -85,6 +115,23 @@ static void null_output_data(void *data, struct encoder_packet *packet)
 	UNUSED_PARAMETER(packet);
 }
 
+static void null_output_raw_video(void *data, struct video_data *frame)
+{
+	struct null_output *context = data;
+
+	if (context->f) {
+		uint32_t height = obs_output_get_height(context->output);
+		size_t written = fwrite(frame->data[0], 1, frame->linesize[0] * height, context->f);
+		blog(LOG_INFO, "Wrote %ld bytes", written);
+	}
+}
+
+static void null_output_raw_audio(void *data, struct audio_data *frame)
+{
+	UNUSED_PARAMETER(data);
+	UNUSED_PARAMETER(frame);
+}
+
 struct obs_output_info null_output_info = {
 	.id = "null_output",
 	.flags = OBS_OUTPUT_AV | OBS_OUTPUT_ENCODED | OBS_OUTPUT_MULTI_TRACK_AV,
@@ -94,4 +141,16 @@ struct obs_output_info null_output_info = {
 	.start = null_output_start,
 	.stop = null_output_stop,
 	.encoded_packet = null_output_data,
+};
+
+struct obs_output_info null_output_info_raw = {
+	.id = "null_output_raw",
+	.flags = OBS_OUTPUT_AV,
+	.get_name = null_output_getname,
+	.create = null_output_create,
+	.destroy = null_output_destroy,
+	.start = null_output_start_raw,
+	.stop = null_output_stop,
+	.raw_video = null_output_raw_video,
+	.raw_audio = null_output_raw_audio,
 };
