@@ -17,30 +17,12 @@ static void decklink_output_destroy(void *data)
 	delete decklink;
 }
 
+static void decklink_output_update(void *, obs_data_t *);
 static void *decklink_output_create(obs_data_t *settings, obs_output_t *output)
 {
 	auto *decklinkOutput = new DeckLinkOutput(output, deviceEnum);
 
-	decklinkOutput->deviceHash = obs_data_get_string(settings, DEVICE_HASH);
-	decklinkOutput->modeID = obs_data_get_int(settings, MODE_ID);
-	decklinkOutput->keyerMode = (int)obs_data_get_int(settings, KEYER);
-	decklinkOutput->force_sdr = obs_data_get_bool(settings, FORCE_SDR);
-
-	ComPtr<DeckLinkDevice> device;
-	device.Set(deviceEnum->FindByHash(decklinkOutput->deviceHash));
-	if (device) {
-		DeckLinkDeviceMode *mode = device->FindOutputMode(decklinkOutput->modeID);
-
-		struct video_scale_info to = {};
-		to.format = VIDEO_FORMAT_BGRA;
-		to.width = mode->GetWidth();
-		to.height = mode->GetHeight();
-		to.range = VIDEO_RANGE_FULL;
-		to.colorspace = (device->GetSupportsHDRMetadata() && !decklinkOutput->force_sdr) ? VIDEO_CS_2100_PQ
-												 : VIDEO_CS_709;
-
-		obs_output_set_video_conversion(output, &to);
-	}
+	decklink_output_update(decklinkOutput, settings);
 
 	return decklinkOutput;
 }
@@ -100,16 +82,23 @@ static bool decklink_output_start(void *data)
 
 	device->SetKeyerMode(decklink->keyerMode);
 
-	if (!decklink->Activate(device, decklink->modeID)) {
-		return false;
-	}
+	struct video_scale_info to = {};
+	to.format = (ovi.output_format == VIDEO_FORMAT_V210) ? VIDEO_FORMAT_V210 : VIDEO_FORMAT_BGRA;
+	to.width = mode->GetWidth();
+	to.height = mode->GetHeight();
+	to.range = VIDEO_RANGE_FULL;
+	to.colorspace = (device->GetSupportsHDRMetadata() && !decklink->force_sdr && ovi.colorspace == VIDEO_CS_2100_PQ) ? VIDEO_CS_2100_PQ : VIDEO_CS_709;
+	obs_output_set_video_conversion(decklink->GetOutput(), &to);
 
 	struct audio_convert_info conversion = {};
 	conversion.format = AUDIO_FORMAT_16BIT;
 	conversion.speakers = SPEAKERS_STEREO;
 	conversion.samples_per_sec = 48000; // Only format the decklink supports
-
 	obs_output_set_audio_conversion(decklink->GetOutput(), &conversion);
+
+	if (!decklink->Activate(device, decklink->modeID)) {
+		return false;
+	}
 
 	if (!obs_output_begin_data_capture(decklink->GetOutput(), 0)) {
 		return false;
