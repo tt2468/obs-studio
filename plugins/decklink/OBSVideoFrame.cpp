@@ -2,11 +2,22 @@
 
 OBSVideoFrame::OBSVideoFrame(long width, long height, BMDPixelFormat pixelFormat)
 {
-	int bpp = 2;
+	switch (pixelFormat) {
+		case bmdFormat10BitYUV:
+		{
+			const uint32_t width_aligned = (width + 47) & -48;
+			this->rowBytes = ((width_aligned + 5) / 6) * 16;
+			this->data = new unsigned char[this->rowBytes * height + 1];
+		}
+		break;
+
+		default:
+			this->rowBytes = width * 2;
+			this->data = new unsigned char[(width * height * 2) + 1];
+	}
+
 	this->width = width;
 	this->height = height;
-	this->rowBytes = width * bpp;
-	this->data = new unsigned char[width * height * bpp + 1];
 	this->pixelFormat = pixelFormat;
 }
 
