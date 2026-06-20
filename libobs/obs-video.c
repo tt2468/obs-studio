@@ -351,6 +351,8 @@ static void render_convert_texture(struct obs_core_video_mix *video, gs_texture_
 	gs_eparam_t *color_vec1 = gs_effect_get_param_by_name(effect, "color_vec1");
 	gs_eparam_t *color_vec2 = gs_effect_get_param_by_name(effect, "color_vec2");
 	gs_eparam_t *image = gs_effect_get_param_by_name(effect, "image");
+	gs_eparam_t *width = gs_effect_get_param_by_name(effect, "width");
+	gs_eparam_t *height = gs_effect_get_param_by_name(effect, "height");
 	gs_eparam_t *width_i = gs_effect_get_param_by_name(effect, "width_i");
 	gs_eparam_t *height_i = gs_effect_get_param_by_name(effect, "height_i");
 	gs_eparam_t *sdr_white_nits_over_maximum = gs_effect_get_param_by_name(effect, "sdr_white_nits_over_maximum");
@@ -374,6 +376,8 @@ static void render_convert_texture(struct obs_core_video_mix *video, gs_texture_
 
 		// Needed for v210 conversion
 		if (!convert_textures[1]) {
+			gs_effect_set_float(width, gs_texture_get_width(texture));
+			gs_effect_set_float(height, gs_texture_get_height(texture));
 			gs_effect_set_vec4(color_vec1, &vec1);
 			gs_effect_set_vec4(color_vec2, &vec2);
 		}

@@ -415,41 +415,39 @@ float4 Pack(float c0, float c1, float c2) {
 
 float4 PackWordFromBlock(uint wInBlk, float3 p0, float3 p1, float3 p2, float3 p3, float3 p4, float3 p5)
 {
-	if (wInBlk == 0)
-		return Pack(Cb10(p0,p1), Luma10(p0), Cr10(p0,p1));
-	if (wInBlk == 1)
-		return Pack(Luma10(p1), Cb10(p2,p3), Luma10(p2));
-	if (wInBlk == 2)
-		return Pack(Cr10(p2,p3), Luma10(p3), Cb10(p4,p5));
-	return Pack(Luma10(p4), Cr10(p4,p5), Luma10(p5));
+	if (wInBlk == 0u)
+		return Pack(Cb10(p0, p1), Luma10(p0), Cr10(p0, p1));
+	if (wInBlk == 1u)
+		return Pack(Luma10(p1), Cb10(p2, p3), Luma10(p2));
+	if (wInBlk == 2u)
+		return Pack(Cr10(p2, p3), Luma10(p3), Cb10(p4, p5));
+	return Pack(Luma10(p4), Cr10(p4, p5), Luma10(p5));
 }
 
 float4 PS_V210_PQ_YUV_709_2020(FragPos frag_in) : TARGET
 {
-	uint wordX = frag_in.pos.x;
-	uint row = frag_in.pos.y;
+	uint wordX = uint(frag_in.pos.x);
+	uint row = uint(frag_in.pos.y);
 	uint block = wordX / 4u;
 	uint wordInBlock = wordX % 4u;
 	uint base = block * 6u;
-	uint frameWidth, frameHeight;
-	image.GetDimensions(frameWidth, frameHeight);
 
-	float3 p0 = image.Load(int3(min(base+0, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p0 = image.Load(int3(min(base, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p0 = rec709_to_rec2020(p0);
 	p0 = linear_to_st2084(p0);
-	float3 p1 = image.Load(int3(min(base+1, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p1 = image.Load(int3(min(base + 1u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p1 = rec709_to_rec2020(p1);
 	p1 = linear_to_st2084(p1);
-	float3 p2 = image.Load(int3(min(base+2, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p2 = image.Load(int3(min(base + 2u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p2 = rec709_to_rec2020(p2);
 	p2 = linear_to_st2084(p2);
-	float3 p3 = image.Load(int3(min(base+3, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p3 = image.Load(int3(min(base + 3u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p3 = rec709_to_rec2020(p3);
 	p3 = linear_to_st2084(p3);
-	float3 p4 = image.Load(int3(min(base+4, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p4 = image.Load(int3(min(base + 4u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p4 = rec709_to_rec2020(p4);
 	p4 = linear_to_st2084(p4);
-	float3 p5 = image.Load(int3(min(base+5, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p5 = image.Load(int3(min(base + 5u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p5 = rec709_to_rec2020(p5);
 	p5 = linear_to_st2084(p5);
 	return PackWordFromBlock(wordInBlock, p0, p1, p2, p3, p4, p5);
@@ -457,30 +455,28 @@ float4 PS_V210_PQ_YUV_709_2020(FragPos frag_in) : TARGET
 
 float4 PS_V210_HLG_YUV_709_2020(FragPos frag_in) : TARGET
 {
-	uint wordX = frag_in.pos.x;
-	uint row = frag_in.pos.y;
+	uint wordX = uint(frag_in.pos.x);
+	uint row = uint(frag_in.pos.y);
 	uint block = wordX / 4u;
 	uint wordInBlock = wordX % 4u;
 	uint base = block * 6u;
-	uint frameWidth, frameHeight;
-	image.GetDimensions(frameWidth, frameHeight);
 
-	float3 p0 = image.Load(int3(min(base+0, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p0 = image.Load(int3(min(base, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p0 = rec709_to_rec2020(p0);
 	p0 = linear_to_hlg(p0, hdr_lw);
-	float3 p1 = image.Load(int3(min(base+1, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p1 = image.Load(int3(min(base + 1u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p1 = rec709_to_rec2020(p1);
 	p1 = linear_to_hlg(p1, hdr_lw);
-	float3 p2 = image.Load(int3(min(base+2, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p2 = image.Load(int3(min(base + 2u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p2 = rec709_to_rec2020(p2);
 	p2 = linear_to_hlg(p2, hdr_lw);
-	float3 p3 = image.Load(int3(min(base+3, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p3 = image.Load(int3(min(base + 3u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p3 = rec709_to_rec2020(p3);
 	p3 = linear_to_hlg(p3, hdr_lw);
-	float3 p4 = image.Load(int3(min(base+4, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p4 = image.Load(int3(min(base + 4u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p4 = rec709_to_rec2020(p4);
 	p4 = linear_to_hlg(p4, hdr_lw);
-	float3 p5 = image.Load(int3(min(base+5, frameWidth), row, 0)).rgb * sdr_white_nits_over_maximum;
+	float3 p5 = image.Load(int3(min(base + 5u, uint(width)), row, 0)).rgb * sdr_white_nits_over_maximum;
 	p5 = rec709_to_rec2020(p5);
 	p5 = linear_to_hlg(p5, hdr_lw);
 	return PackWordFromBlock(wordInBlock, p0, p1, p2, p3, p4, p5);
@@ -488,21 +484,18 @@ float4 PS_V210_HLG_YUV_709_2020(FragPos frag_in) : TARGET
 
 float4 PS_V210_SRGB_YUV(FragPos frag_in) : TARGET
 {
-	uint wordX = frag_in.pos.x;
-	uint row = frag_in.pos.y;
+	uint wordX = uint(frag_in.pos.x);
+	uint row = uint(frag_in.pos.y);
 	uint block = wordX / 4u;
 	uint wordInBlock = wordX % 4u;
 	uint base = block * 6u;
-	uint frameWidth, frameHeight;
-	image.GetDimensions(frameWidth, frameHeight);
 
-
-	float3 p0 = srgb_linear_to_nonlinear(image.Load(int3(min(base+0, frameWidth), row, 0)).rgb);
-	float3 p1 = srgb_linear_to_nonlinear(image.Load(int3(min(base+1, frameWidth), row, 0)).rgb);
-	float3 p2 = srgb_linear_to_nonlinear(image.Load(int3(min(base+2, frameWidth), row, 0)).rgb);
-	float3 p3 = srgb_linear_to_nonlinear(image.Load(int3(min(base+3, frameWidth), row, 0)).rgb);
-	float3 p4 = srgb_linear_to_nonlinear(image.Load(int3(min(base+4, frameWidth), row, 0)).rgb);
-	float3 p5 = srgb_linear_to_nonlinear(image.Load(int3(min(base+5, frameWidth), row, 0)).rgb);
+	float3 p0 = srgb_linear_to_nonlinear(image.Load(int3(min(base, uint(width)), row, 0)).rgb);
+	float3 p1 = srgb_linear_to_nonlinear(image.Load(int3(min(base + 1u, uint(width)), row, 0)).rgb);
+	float3 p2 = srgb_linear_to_nonlinear(image.Load(int3(min(base + 2u, uint(width)), row, 0)).rgb);
+	float3 p3 = srgb_linear_to_nonlinear(image.Load(int3(min(base + 3u, uint(width)), row, 0)).rgb);
+	float3 p4 = srgb_linear_to_nonlinear(image.Load(int3(min(base + 4u, uint(width)), row, 0)).rgb);
+	float3 p5 = srgb_linear_to_nonlinear(image.Load(int3(min(base + 5u, uint(width)), row, 0)).rgb);
 	return PackWordFromBlock(wordInBlock, p0, p1, p2, p3, p4, p5);
 }
 
