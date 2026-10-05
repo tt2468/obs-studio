@@ -699,6 +699,14 @@ static SetVideoFormatResult set_video_format(struct vt_encoder *enc, enum video_
 			return kResultFullRangeUnsupported;
 		}
 		break;
+	case VIDEO_FORMAT_V210:
+		if (!full_range) {
+			enc->vt_pix_fmt = kCVPixelFormatType_422YpCbCr10;
+			return kResultSuccess;
+		} else {
+			return kResultFullRangeUnsupported;
+		}
+		break;
 	default:
 		return kResultColorFormatUnsupported;
 	}
